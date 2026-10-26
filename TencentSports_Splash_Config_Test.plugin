@@ -1,0 +1,20 @@
+#!name = 腾讯体育开屏广告测试（远程配置）
+#!desc = 实验性屏蔽腾讯体育开屏相关远程配置；可能影响正常功能。优先单接口测试，异常立即停用。
+#!author = Custom HAR Analysis
+#!homepage = https://github.com/Hey-sayiwanna/TencentSports-Surge
+#!loon_version = 3.5.1(983)
+#!date = 2026-10-26
+
+[Argument]
+block_remote = switch,true,type=boolean,tag=屏蔽远程配置,desc=首先单独测试此项
+block_toggle = switch,false,type=boolean,tag=屏蔽功能开关,desc=第一项无效时再打开此项
+
+[Rewrite]
+# 与腾讯体育抓包命中的 HTTPS Protobuf 接口一一对应。
+# 不拦截整个 config.ab.qq.com 域名。
+# 采用与已发布 Surge 实验方案相同的空 Protobuf 思路，但 Loon 实际效果尚待验证。
+response if ${block_remote} == true && ${url} ~= /^https:\/\/config\.ab\.qq\.com\/tab\/GetTabRemoteConfig(?:\?|$)/ then response.body.mock("text", "", 200) | response.header.set("Content-Type", "application/proto")
+response if ${block_toggle} == true && ${url} ~= /^https:\/\/config\.ab\.qq\.com\/tab\/GetTabToggle(?:\?|$)/ then response.body.mock("text", "", 200) | response.header.set("Content-Type", "application/proto")
+
+[Mitm]
+hostname = config.ab.qq.com
